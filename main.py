@@ -160,7 +160,7 @@ class MainApp(App):
         
         self.showpads()
         
-        #self.findbrick()
+        self.findbrick()
     
     def _keyboard_closed(self):
         print('My keyboard have been closed!')
