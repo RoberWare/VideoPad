@@ -25,4 +25,5 @@ Edit port configurations")
 ![alt text](https://github.com/RoberWare/VideoPad/blob/master/imgs/sc_05.png "Setting the video ip")
 
 ## Instalation
-Easy usage: 'python main.py'
+Easy usage: 
+> python main.py
