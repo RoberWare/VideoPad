@@ -1,0 +1,758 @@
+#:import time time
+#:import math math
+#:import os os
+#:import partial functools.partial 
+
+#:import NavigationDrawer kivy.garden.navigationdrawer
+#: import Joystick kivy.garden.joystick.Joystick
+
+#:import sm kivy.uix.screenmanager
+#:import Factory kivy.factory.Factory
+#:set color_button (.5,.5,.5,1)
+#:set color_button_pressed (1, 1, 1, 1)
+#:set color_font   (0.957, 0.890, 0.843, 1)  # off white
+
+<Screen>:
+    canvas:
+        Color:
+            rgb: .2, .2, .2
+        Rectangle:
+            size: self.size
+
+<MetaPanel>
+    NavigationDrawer:
+        id: NavDraw
+        SidePanel:
+            id: SidePanel
+        MainPanel:
+            id: MainPanel
+
+<MainPanel>
+    BoxLayout:
+        orientation: "vertical"
+        AnchorLayout:
+            anchor_x:"center"
+            anchor_y:"center"
+            spacing: "10dp"
+            size_hint: 1,None
+            height: "60dp"
+            canvas.before:
+                Color:
+                    rgb: 0.1, 0.1, 0.1
+                Rectangle:
+                    pos: self.pos
+                    size: self.size
+            AnchorLayout:
+                anchor_x:"left"
+                anchor_y:"center"
+                Button:
+                    id: btn_rad
+                    on_release: app.show_side_panel()
+                    background_color: (0.8,0.8,0.8,1)
+                    size_hint: None,1
+                    width: "60dp"
+                    BoxLayout:
+                        orientation: "vertical"
+                        size: self.parent.size
+                        pos: self.parent.pos
+                        padding: "10dp"
+                        Image:
+                            source: "./imgs/buttons/menu.png"
+                            allow_stretch: True
+                            pos: self.parent.pos
+                            size: self.parent.size
+                            mipmap: True
+
+            AnchorLayout:
+                anchor_x:"center"
+                anchor_y:"center"
+                Label:
+                    #font_name: "ab.ttf"
+                    text: "VideoPad"
+                    font_size: "50sp"
+        ScreenManager:
+            id: ScrMan
+            current: myControlPadsUI.name
+            transition: sm.FadeTransition()
+            VideoPadUI:
+                id: myVideoPadUI
+                name: 'VideoPad UI'
+            ControlPadsUI:
+                id: myControlPadsUI
+                name: 'ControlPad UI'
+
+<SidePanel>
+    GridLayout:
+        cols: 1
+        BoxLayout:
+            padding: "10dp"
+            orientation: "vertical"
+            size_hint: 1,.2
+            canvas.before:
+                Color:
+                    rgb: .9,.9,.9
+                Rectangle:
+                    pos: self.pos
+                    size: self.size
+            BoxLayout:
+                orientation: "horizontal"
+                size_hint: 1,None
+                height: "60dp"
+                Image:
+                    source: "./imgs/logo.png"
+                BoxLayout:
+                    orientation: "vertical"
+                    Label:
+                        text_size: self.width, None
+                        height: self.texture_size[1]
+                        text: "Logged out."
+                        color: 1,0,0,1
+                        canvas.before:
+                            Color:
+                                rgba: 0, 0, 0, 1
+                            Rectangle:
+                                pos: self.pos
+                                size: self.size
+                    Button:
+                        text_size: self.width, None
+                        height: self.texture_size[1]
+                        text: "Log in (?)"
+
+            StackLayout:
+                orientation: 'tb-lr'
+                canvas.before:
+                    Color:
+                        rgb: .1,.1,.1
+                    Rectangle:
+                        pos: self.pos
+                        size: self.size
+                MyButton:
+                    id: btn_5
+                    on_release: app.controlpads()
+                    myimg: "./imgs/buttons/gallery.png"
+                    mylbl: "Control Pads"
+                MyButton:
+                    id: btn_4
+                    #on_release: app.conf()
+                    myimg: "./imgs/buttons/settings.png"
+                    mylbl: "Settings"
+                MyButton:
+                    id: btn_5
+                    #on_release: app.credits()
+                    myimg: "./imgs/buttons/creditos.png"
+                    mylbl: "Credits"
+
+
+<VideoPadUI>
+    id: control
+    BoxLayout:
+        orientation: "vertical"
+        Video:
+            id: video
+            source: "http://root:toor@192.168.0.167:8080/video"
+            play: True
+
+<ControlPadsUI>
+    BoxLayout:
+        id: bl
+        orientation: 'vertical'
+        ScrollView
+            size_hint: 1,1
+            pos_hint:{'center_x': .5, 'center_y': .5}
+            do_scroll_x:False
+            GridLayout:
+                padding:10
+                spacing:10
+                size_hint:(1, None)
+                cols:1
+                id: pads
+        Button:
+            text: "New control pad"
+            background_color: color_button if self.state == 'normal' else color_button_pressed
+            background_down: 'atlas://data/images/defaulttheme/spinner'
+            color: color_font
+            size_hint: (1,None)
+            height: "50dp"
+            on_release: app.combine_funcs(app.resetsettings(),app.myPadSettingsUI.open())
+
+<PadSettingsUI>
+    title: "Pad settings"
+    BoxLayout:
+        orientation: "vertical"
+        TextInput:
+            id: padname
+            hint_text: "Pad name"
+            size_hint: (1,None)
+            height: "50dp"
+        Button:
+            text: "Ports"
+            on_release: app.myPortSettingsUI.open()
+            size_hint: (1,None)
+            height: "50dp"
+        Button:
+            text: "Mapping"
+            on_release: app.combine_funcs(app.preparemappingUI(),app.myMappingUI.open())
+            size_hint: (1,None)
+            height: "50dp"
+        Button:
+            text: "Video IP"
+            on_release: app.combine_funcs(app.preparemappingUI(),app.myVideoIPUI.open())
+            size_hint: (1,None)
+            height: "50dp"
+        BoxLayout:
+        BoxLayout:
+            orientation: "horizontal"
+            size_hint: (1,None)
+            height: "50dp"
+            Button:
+                text: "Cancel"
+                on_release: app.myPadSettingsUI.dismiss()
+            Button:
+                text: "Save"
+                on_release: app.combine_funcs(app.savesettings(),app.myPadSettingsUI.dismiss())
+
+<PortSettingsUI>
+    title: "Port settings"
+    BoxLayout:
+        orientation: "vertical"
+        padding: "10dp"
+        spacing: "10dp"
+        ScrollView:
+            BoxLayout:
+                orientation: "vertical"
+                Label:
+                    text: "Motor ports"
+                BoxLayout:
+                    orientation: "horizontal"
+                    Label: 
+                        text: "PORT A"
+                    Spinner:
+                        id: porta
+                        background_color: color_button if self.state == 'normal' else color_button_pressed
+                        background_down: 'atlas://data/images/defaulttheme/spinner'
+                        color: color_font
+                        option_cls: Factory.get("MySpinnerOption")
+                        text: "None"
+                        values: ("None","Motor")
+                BoxLayout:
+                    orientation: "horizontal"
+                    Label:  
+                        text: "PORT B"
+                    Spinner:
+                        id: portb
+                        background_color: color_button if self.state == 'normal' else color_button_pressed
+                        background_down: 'atlas://data/images/defaulttheme/spinner'
+                        color: color_font
+                        option_cls: Factory.get("MySpinnerOption")
+                        text: "None"
+                        values: ("None","Motor")
+                BoxLayout:
+                    orientation: "horizontal"
+                    Label:  
+                        text: "PORT C"
+                    Spinner:
+                        id: portc
+                        background_color: color_button if self.state == 'normal' else color_button_pressed
+                        background_down: 'atlas://data/images/defaulttheme/spinner'
+                        color: color_font
+                        option_cls: Factory.get("MySpinnerOption")
+                        text: "None"
+                        values: ("None","Motor")
+                Label:
+                    text: "Sensor ports"
+                BoxLayout:
+                    orientation: "horizontal"
+                    Label:  
+                        text: "PORT 1"
+                    Spinner:
+                        id: port1
+                        background_color: color_button if self.state == 'normal' else color_button_pressed
+                        background_down: 'atlas://data/images/defaulttheme/spinner'
+                        color: color_font
+                        option_cls: Factory.get("MySpinnerOption")
+                        text: "None"
+                        values: ("None","Ultrasonic","Mic","Touch","Colour")
+                BoxLayout:
+                    orientation: "horizontal"
+                    Label:  
+                        text: "PORT 2"
+                    Spinner:
+                        id: port2
+                        background_color: color_button if self.state == 'normal' else color_button_pressed
+                        background_down: 'atlas://data/images/defaulttheme/spinner'
+                        color: color_font
+                        option_cls: Factory.get("MySpinnerOption")
+                        text: "None"
+                        values: ("None","Ultrasonic","Mic","Touch","Colour")
+                BoxLayout:
+                    orientation: "horizontal"
+                    Label:  
+                        text: "PORT 3"
+                    Spinner:
+                        id: port3
+                        background_color: color_button if self.state == 'normal' else color_button_pressed
+                        background_down: 'atlas://data/images/defaulttheme/spinner'
+                        color: color_font
+                        option_cls: Factory.get("MySpinnerOption")
+                        text: "None"
+                        values: ("None","Ultrasonic","Mic","Touch","Colour")
+                BoxLayout:
+                    orientation: "horizontal"
+                    Label:  
+                        text: "PORT 4"
+                    Spinner:
+                        id: port4
+                        background_color: color_button if self.state == 'normal' else color_button_pressed
+                        background_down: 'atlas://data/images/defaulttheme/spinner'
+                        color: color_font
+                        option_cls: Factory.get("MySpinnerOption")
+                        text: "None"
+                        values: ("None","Ultrasonic","Mic","Touch","Colour")
+        BoxLayout:
+            orientation: "horizontal"
+            size_hint: (1,None)
+            height: "50dp"
+            Button:
+                text: "Ok"
+                on_release: app.myPortSettingsUI.dismiss()
+
+<MappingUI>
+    title: "Mapping"
+    BoxLayout:
+        orientation: "vertical"
+        BoxLayout:
+            orientation: "horizontal"
+            size_hint: (1,None)
+            height: "50dp"
+            Label:
+                text: "Control mode"
+            Spinner:
+                id: controlmode
+                background_color: color_button if self.state == 'normal' else color_button_pressed
+                background_down: 'atlas://data/images/defaulttheme/spinner'
+                color: color_font
+                option_cls: Factory.get("MySpinnerOption")
+                text: "Classic"
+                values: ("Tank","Classic")
+                disabled: True
+        BoxLayout:
+            orientation: "horizontal"
+            BoxLayout:
+                orientation: "vertical"
+                BoxLayout:
+                    orientation: "horizontal"
+                    size_hint: (1,None)
+                    height: "50dp"
+                    Label:
+                        text: "Pad 1"
+                    CheckBox:
+                        id:pad1
+                        active: True
+                        disabled: True
+                GridLayout:
+                    cols: 3
+                    rows: 2
+                    BoxLayout:
+                    Button:
+                        text: "w"
+                        id: w
+                        on_release: app.combine_funcs(app.setmappingkey("w"), app.myKeyMappingUI.open())
+                    BoxLayout:
+                    Button:
+                        text: "a"
+                        id: a
+                        on_release: app.combine_funcs(app.setmappingkey("a"), app.myKeyMappingUI.open())
+                    Button:
+                        text: "s"
+                        id: s
+                        on_release: app.combine_funcs(app.setmappingkey("s"), app.myKeyMappingUI.open())
+                    Button:
+                        text: "d"
+                        id: d
+                        on_release: app.combine_funcs(app.setmappingkey("d"), app.myKeyMappingUI.open())
+            BoxLayout:
+                orientation: "vertical"
+                BoxLayout:
+                    orientation: "horizontal"
+                    size_hint: (1,None)
+                    height: "50dp"
+                    Label:
+                        text: "Pad 2"
+                    CheckBox:
+                        id:pad2
+                        active: True
+                GridLayout:
+                    cols: 3
+                    rows: 2
+                    BoxLayout:
+                    Button:
+                        text: "up"
+                        id:up
+                        on_release: app.combine_funcs(app.setmappingkey("up"), app.myKeyMappingUI.open())
+                        disabled: False if root.ids.pad2.active else True 
+                    BoxLayout:
+                    Button:
+                        text: "left"
+                        id:left
+                        on_release: app.combine_funcs(app.setmappingkey("left"), app.myKeyMappingUI.open())
+                        disabled: False if root.ids.pad2.active else True 
+                    Button:
+                        text: "down"
+                        id:down
+                        on_release: app.combine_funcs(app.setmappingkey("down"), app.myKeyMappingUI.open())
+                        disabled: False if root.ids.pad2.active else True 
+                    Button:
+                        text: "right"
+                        id:right
+                        on_release: app.combine_funcs(app.setmappingkey("right"), app.myKeyMappingUI.open())
+                        disabled: False if root.ids.pad2.active else True 
+        BoxLayout:
+            orientation: "horizontal"
+            size_hint: (1,None)
+            height: "50dp"
+            Button:
+                text: "Ok"
+                on_release: app.myMappingUI.dismiss()
+
+<KeyMappingUI>
+    title: "Key mapping"
+    BoxLayout:
+        orientation: "vertical"
+        BoxLayout:
+            orientation: "horizontal"
+            size_hint: (1,None)
+            height: "50dp"
+            Label:
+                text: "Key"
+            Button:
+                id: key
+                text: ""
+                on_release: app.addnewkey()
+        BoxLayout:
+            orientation: "horizontal"
+            BoxLayout:
+                orientation: "vertical"
+                Label:
+                    text: "PORT A"
+                    size_hint: (1,None)
+                    height: "50dp"
+                BoxLayout:
+                    orientation: "vertical"
+                    size_hint: (1,None)
+                    height: "70dp"
+                    BoxLayout:
+                        orientation: "horizontal"
+                        Label:
+                            text: "Run motor"
+                        CheckBox:
+                            id: ra
+                            group: "a"
+                    BoxLayout:
+                        orientation: "horizontal"
+                        Label:
+                            text: "Power "+str(round(powerra.value))[:-2]
+                        Slider:
+                            orientation: "horizontal"
+                            min: -100
+                            max: 100
+                            value: 0
+                            id: powerra
+                BoxLayout:
+                    orientation: "vertical"
+                    size_hint: (1,None)
+                    height: "70dp"
+                    BoxLayout:
+                        orientation: "horizontal"
+                        Label:
+                            text: "Turn motor"
+                        CheckBox:
+                            id: ta
+                            group: "a"
+                    BoxLayout:
+                        orientation: "horizontal"
+                        Label:
+                            text: "Power "+str(round(powerta.value))[:-2]
+                        Slider:
+                            orientation: "horizontal"
+                            min: -100
+                            max: 100
+                            value: 0
+                            id: powerta
+                        Label:
+                            text: "Tacho "+str(round(tachoa.value))[:-2]
+                        Slider:
+                            orientation: "horizontal"
+                            min: 0
+                            max: 100
+                            value: 0
+                            text: "100"
+                            id: tachoa
+            BoxLayout:
+                orientation: "vertical"
+                Label:
+                    text: "PORT B"
+                    size_hint: (1,None)
+                    height: "50dp"
+                BoxLayout:
+                    orientation: "vertical"
+                    size_hint: (1,None)
+                    height: "70dp"
+                    BoxLayout:
+                        orientation: "horizontal"
+                        Label:
+                            text: "Run motor"
+                        CheckBox:
+                            id: rb
+                            group: "b"
+                    BoxLayout:
+                        orientation: "horizontal"
+                        Label:
+                            text: "Power "+str(round(powerrb.value))[:-2]
+                        Slider:
+                            orientation: "horizontal"
+                            min: -100
+                            max: 100
+                            value: 0
+                            id: powerrb
+                BoxLayout:
+                    orientation: "vertical"
+                    size_hint: (1,None)
+                    height: "70dp"
+                    BoxLayout:
+                        orientation: "horizontal"
+                        Label:
+                            text: "Turn motor"
+                        CheckBox:
+                            id: tb
+                            group: "b"
+                    BoxLayout:
+                        orientation: "horizontal"
+                        Label:
+                            text: "Power "+str(round(powertb.value))[:-2]
+                        Slider:
+                            orientation: "horizontal"
+                            min: -100
+                            max: 100
+                            value: 0
+                            id: powertb
+                        Label:
+                            text: "Tacho "+str(round(tachob.value))[:-2]
+                        Slider:
+                            orientation: "horizontal"
+                            min: 0
+                            max: 100
+                            value: 0
+                            id: tachob
+            BoxLayout:
+                orientation: "vertical"
+                Label:
+                    text: "PORT C"
+                    size_hint: (1,None)
+                    height: "50dp"
+                BoxLayout:
+                    orientation: "vertical"
+                    size_hint: (1,None)
+                    height: "70dp"
+                    BoxLayout:
+                        orientation: "horizontal"
+                        Label:
+                            text: "Run motor"
+                        CheckBox:
+                            id: rc
+                            group: "c"
+                    BoxLayout:
+                        orientation: "horizontal"
+                        Label:
+                            text: "Power "+str(round(powerrc.value))[:-2]
+                        Slider:
+                            orientation: "horizontal"
+                            min: -100
+                            max: 100
+                            value: 0
+                            id: powerrc
+                BoxLayout:
+                    orientation: "vertical"
+                    size_hint: (1,None)
+                    height: "70dp"
+                    BoxLayout:
+                        orientation: "horizontal"
+                        Label:
+                            text: "Turn motor"
+                        CheckBox:
+                            id: tc
+                            group: "c"
+                    BoxLayout:
+                        orientation: "horizontal"
+                        Label:
+                            text: "Power "+str(round(powertc.value))[:-2]
+                        Slider:
+                            orientation: "horizontal"
+                            min: -100
+                            max: 100
+                            value: 0
+                            id: powertc
+                        Label:
+                            text: "Tacho "+str(round(tachoc.value))[:-2]
+                            id:labeltachoc
+                        Slider:
+                            orientation: "horizontal"
+                            min: 0
+                            max: 100
+                            value: 0
+                            id: tachoc
+        BoxLayout:
+        BoxLayout:
+            orientation: "horizontal"
+            size_hint: (1,None)
+            height: "50dp"
+            Button:
+                text: "Ok"
+                on_release: app.combine_funcs(app.tmpkeymapping(),app.myKeyMappingUI.dismiss())
+        
+<VideoIPUI>
+    size_hint:(.5,.3)
+    title: "Video settings"
+    BoxLayout:
+        orientation: "vertical"
+        TextInput:
+            hint_text: "ip"
+            id:ip
+        Button:
+            size_hint: 1,None
+            height: "40dp"
+            text: "Ok"
+            on_release: root.dismiss()
+
+<TankControl>
+    AnchorLayout:
+        anchor_x:"center"
+        anchor_y:"center"
+        size: root.size
+        BoxLayout:
+            orientation: "horizontal"
+            Slider:
+                id: forwardB
+                orientation: "vertical"
+                min: 100
+                max: -100
+                value: root.s2
+            Slider:
+                id: forwardA
+                orientation: "vertical"
+                min: 100
+                max: -100
+                value: root.s1
+        
+<ClassicControl>
+    AnchorLayout:
+        id: up
+        opacity:0.5
+        anchor_x:"center"
+        anchor_y:"center"
+        size: root.size
+        GridLayout:
+            id:right
+            cols: 3
+            rows: 2
+            BoxLayout:
+                id: down
+            Button:
+                text: "w"
+                id: w
+            BoxLayout:
+                id: left
+            Button:
+                text: "a"
+                id: a
+            Button:
+                text: "s"
+                id: s
+            Button:
+                text: "d"
+                id: d
+
+<DualClassicControl>
+    AnchorLayout:
+        opacity:0.5
+        anchor_x:"center"
+        anchor_y:"center"
+        size: root.size
+        BoxLayout:
+            orientation: "horizontal"
+            GridLayout:
+                cols: 3
+                rows: 2
+                BoxLayout:
+                Button:
+                    text: "w"
+                    id: w
+                BoxLayout:
+                Button:
+                    text: "a"
+                    id: a
+                Button:
+                    text: "s"
+                    id: s
+                Button:
+                    text: "d"
+                    id: d
+            GridLayout:
+                cols: 3
+                rows: 2
+                BoxLayout:
+                Button:
+                    text: "up"
+                    id: up
+                BoxLayout:
+                Button:
+                    text: "left"
+                    id: left
+                Button:
+                    text: "down"
+                    id: down
+                Button:
+                    text: "right"
+                    id: right                                    
+
+<PopMsg>
+    BoxLayout:
+        orientation: "vertical"
+        Label:
+            id:mylbl
+            text: root.msg
+        Button:
+            size_hint: 1,None
+            height: "40dp"
+            text: "Ok"
+            on_release: root.dismiss()
+
+<MyButton>:
+    myimg: ""
+    mylbl: "Dummy"
+    background_color: (0.8,0.8,0.8,1)
+    size_hint: (1,None)
+    height: "50dp"
+    BoxLayout:
+        orientation: "horizontal"
+        pos: root.pos
+        size: root.size
+        padding: "10dp"
+        spacing: "10dp"
+        Image:
+            source: root.myimg
+            allow_stretch: True
+            mipmap: True
+            pos: self.parent.pos
+            size_hint: (None, None)
+            size: self.parent.height-dp(20), self.parent.height-dp(10)
+        Label:
+            text_size: self.width, None
+            height: self.texture_size[1]
+            text: root.mylbl
+            halign: "left"
+            valign: "middle"
+
+<MySpinnerOption@SpinnerOption>:
+    background_color: color_button if self.state == 'down' else color_button_pressed
+    background_down: 'atlas://data/images/defaulttheme/button'
+    color: color_font
